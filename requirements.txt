@@ -1,4 +1,4 @@
-"""Production requirements for MCP HTTP project."""
+# Production requirements for MCP HTTP project
 
 mcp==1.16.0
 fastmcp==2.12.5
