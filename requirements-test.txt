@@ -1,4 +1,4 @@
-"""Test requirements for MCP HTTP project."""
+# Test requirements for MCP HTTP project
 
 # Test framework
 pytest==7.4.3
