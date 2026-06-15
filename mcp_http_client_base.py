@@ -3,7 +3,6 @@ from contextlib import AsyncExitStack
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 import logging
-import time
 
 logging.basicConfig(
     level=logging.INFO,
