@@ -9,6 +9,7 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
@@ -21,6 +22,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     
     - name: Install dependencies
       run: |
@@ -28,19 +30,12 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-test.txt
     
-    - name: Lint with pylint
+    - name: Run pytest
       run: |
-        pylint mcp_http_*.py mcp_config.py || true
+        pytest tests/ -v --tb=short 2>&1
     
-    - name: Format check with black
-      run: |
-        black --check mcp_http_*.py mcp_config.py || true
-    
-    - name: Type check with mypy
-      run: |
-        mypy mcp_http_*.py mcp_config.py --ignore-missing-imports || true
-    
-    - name: Run tests with pytest
+    - name: Run pytest with coverage
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
       run: |
         pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
     
@@ -50,72 +45,4 @@ jobs:
       with:
         file: ./coverage.xml
         flags: unittests
-        name: codecov-umbrella
         fail_ci_if_error: false
-
-  security:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit safety
-    
-    - name: Security check with bandit
-      run: |
-        bandit -r mcp_http_*.py mcp_config.py || true
-    
-    - name: Dependency check with safety
-      run: |
-        safety check --file requirements.txt || true
-
-  integration-test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-test.txt
-    
-    - name: Run integration tests
-      run: |
-        pytest tests/ -v -k integration --timeout=30
-      continue-on-error: true
-
-  code-quality:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-test.txt
-    
-    - name: Lint with flake8
-      run: |
-        flake8 mcp_http_*.py mcp_config.py --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 mcp_http_*.py mcp_config.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics

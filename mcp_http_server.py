@@ -18,7 +18,7 @@ mcp = FastMCP("HTTP File Server")
 
 BASE_DIR = Path(__file__).parent / "workspace"
 BASE_DIR.mkdir(exist_ok=True)
-logger.info(f"Workspace root directory: {BASE_DIR}")
+logger.info("Workspace root directory: %s", BASE_DIR)
 
 
 def is_within_roots(path: Path) -> bool:
@@ -45,23 +45,23 @@ def read_file(filepath: str) -> str:
     path = BASE_DIR / filepath
 
     if not is_within_roots(path):
-        logger.warning(f"Access denied for path: {filepath}")
-        return f"Error: Access denied - path outside workspace roots"
+        logger.warning("Access denied for path: %s", filepath)
+        return "Error: Access denied - path outside workspace roots"
 
     if not path.exists():
-        logger.info(f"File not found: {filepath}")
-        return f"Error: File not found: {filepath}"
+        logger.info("File not found: %s", filepath)
+        return "Error: File not found: " + filepath
 
     try:
         content = path.read_text(encoding='utf-8')
-        logger.info(f"Successfully read file: {filepath} ({len(content)} bytes)")
+        logger.info("Successfully read file: %s (%d bytes)", filepath, len(content))
         return content
     except UnicodeDecodeError:
-        logger.error(f"File is not valid UTF-8: {filepath}")
-        return f"Error: File is not valid UTF-8 text"
+        logger.error("File is not valid UTF-8: %s", filepath)
+        return "Error: File is not valid UTF-8 text"
     except Exception as e:
-        logger.error(f"Error reading file {filepath}: {str(e)}")
-        return f"Error reading file: {str(e)}"
+        logger.error("Error reading file %s: %s", filepath, str(e))
+        return "Error reading file: " + str(e)
 
 
 @mcp.tool()
@@ -69,27 +69,27 @@ def write_file(filepath: str, content: str) -> str:
     """Write content to a file in the workspace directory."""
     # Input validation
     if not filepath or not isinstance(filepath, str):
-        logger.warning(f"Invalid filepath parameter: {filepath}")
+        logger.warning("Invalid filepath parameter: %s", filepath)
         return "Error: filepath must be a non-empty string"
     
     if filepath.startswith('/') or '../' in filepath:
-        logger.warning(f"Suspicious filepath attempt: {filepath}")
+        logger.warning("Suspicious filepath attempt: %s", filepath)
         return "Error: Invalid filepath - absolute paths not allowed"
     
     path = BASE_DIR / filepath
 
     if not is_within_roots(path):
-        logger.warning(f"Access denied for write: {filepath}")
-        return f"Error: Access denied - path outside workspace roots"
+        logger.warning("Access denied for write: %s", filepath)
+        return "Error: Access denied - path outside workspace roots"
 
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding='utf-8')
-        logger.info(f"Successfully wrote {len(content)} characters to {filepath}")
-        return f"Successfully wrote {len(content)} characters to {filepath}"
+        logger.info("Successfully wrote %d characters to %s", len(content), filepath)
+        return "Successfully wrote %d characters to %s" % (len(content), filepath)
     except Exception as e:
-        logger.error(f"Error writing file {filepath}: {str(e)}")
-        return f"Error writing file: {str(e)}"
+        logger.error("Error writing file %s: %s", filepath, str(e))
+        return "Error writing file: " + str(e)
 
 
 @mcp.tool()
