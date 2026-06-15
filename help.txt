@@ -1,0 +1,68 @@
+# Instalation:
+pip install mcp==1.16.0 fastmcp==2.12.5 httpx==0.28.1 uvicorn==0.38.0 gradio==5.49.1 openai==2.6.1
+==================================================================================================
+#Start the HTTP MCP Server:
+cd mcp_advanced_lab
+echo "# Test File" > workspace/test.txt
+echo "This is a test file in the workspace." >> workspace/test.txt
+echo "# README" > workspace/README.md
+echo "Welcome to the MCP workspace!" >> workspace/README.md
+
+# Start the Server:
+- Now start the HTTP MCP server in a terminal:
+python mcp_http_server.py
+=================================================================================================
+
+#Run the GUI Client App:
+- Open a new terminal and run the GUI client:
+cd mcp_advanced_lab
+python mcp_http_client_app.py http://127.0.0.1:8000 workspace
+
+=========================================================================================
+#Other Steps to Test :
+Note: if this GUI Client button above does not work, follow these instructions to launch the application:
+
+Click the Skills Network icon at the top right and select Launch Application.
+
+Type 7861 in the Application Port field and click Your Application.
+
+You should now be able to interact with your GUI client! You'll see the Gradio interface with three tabs: Tools, Resources, and Prompts.
+
+#Quick Tests
+Test the functionality with the following:
+
+Test 1: List and Call Tools
+
+Click "List Tools" button
+Verify you see 4 tools: read_file, write_file, list_files, analyze_code
+Select list_files from the dropdown
+Enter arguments: {"directory": "."}
+Click "Call Tool"
+Verify you see the list of files in the workspace
+Test 2: Test Roots Security
+
+Select read_file from the dropdown
+Try to read a file outside roots: {"filepath": "/etc/passwd"}
+Click "Call Tool"
+Expected result: Error message indicating the file is outside the allowed roots directory
+This demonstrates that roots security is working
+Test 3: List and Read Resources
+
+Go to the "Resources" tab
+Click "List Resources"
+Verify you see resource templates such as file://workspace/{filename}
+Enter a resource URI: file://workspace/test.txt
+Click "Read Resource"
+Verify you see the file content
+Test 4: List and Get Prompts
+
+Go to the "Prompts" tab
+Click "List Prompts"
+Verify you see prompts: review_code, analyze_security
+Select review_code from the dropdown
+Enter arguments: {"filename": "test.txt"}
+Click "Get Prompt"
+Verify you see the rendered prompt template with the filename substituted
+If you ever want to stop the application from running, you can do so by pressing Ctrl+C in the terminal and closing the application tab.
+
+

@@ -1,0 +1,17 @@
+{
+  "openai": {
+    "api_key": "${OPENAI_API_KEY}",
+    "model": "gpt-4o-mini"
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8000
+  },
+  "gui": {
+    "host": "127.0.0.1",
+    "port": 7862
+  },
+  "logging": {
+    "level": "INFO"
+  }
+}
