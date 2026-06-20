@@ -67,19 +67,14 @@ class TestMCPHTTPClientConnection:
     async def test_connect_retry_logic(self):
         """Test retry logic on connection failure."""
         client = MCPHTTPClient("http://localhost:8000", "/workspace")
-        
-        with patch('mcp_http_client_base.streamablehttp_client') as mock_client_func:
-            # Fail first two times, succeed on third
-            mock_client_func.return_value.__aenter__.side_effect = [
-                Exception("Connection failed"),
-                Exception("Connection failed"),
-                (AsyncMock(), AsyncMock(), None)
-            ]
-            
-            # This should raise after max retries
+
+        with patch('mcp_http_client_base.streamablehttp_client') as mock_client_func, \
+             patch('mcp_http_client_base.asyncio.sleep', new=AsyncMock()):
+            # Fail all attempts so the exception propagates after MAX_RETRIES
+            mock_client_func.return_value.__aenter__.side_effect = Exception("Connection failed")
+
             with pytest.raises(Exception):
-                with patch('mcp_http_client_base.ClientSession'):
-                    await client.connect()
+                await client.connect()
 
     @pytest.mark.asyncio
     async def test_cleanup(self):
