@@ -3,14 +3,12 @@ from pathlib import Path
 import logging
 import warnings
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Suppress deprecation warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 logging.getLogger("fastmcp").setLevel(logging.WARNING)
 
@@ -21,27 +19,36 @@ BASE_DIR.mkdir(exist_ok=True)
 logger.info("Workspace root directory: %s", BASE_DIR)
 
 
-def is_within_roots(path: Path) -> bool:
-    """Check if path is within allowed roots directory."""
-    try:
-        path.resolve().relative_to(BASE_DIR.resolve())
-        return True
-    except ValueError:
-        return False
+def is_within_roots(path, roots=None) -> bool:
+    """Check if path is within allowed roots directory.
+
+    Accepts an optional list of root paths. When roots is omitted, BASE_DIR is used.
+    Relative paths are resolved relative to each root before comparison.
+    """
+    if roots is None:
+        roots = [BASE_DIR]
+    path = Path(path) if isinstance(path, str) else path
+    for root in roots:
+        root = Path(root) if isinstance(root, str) else root
+        try:
+            check_path = path if path.is_absolute() else root / path
+            check_path.resolve().relative_to(root.resolve())
+            return True
+        except ValueError:
+            continue
+    return False
 
 
-@mcp.tool()
 def read_file(filepath: str) -> str:
     """Read a file from the workspace directory."""
-    # Input validation
     if not filepath or not isinstance(filepath, str):
         logger.warning(f"Invalid filepath parameter: {filepath}")
         return "Error: filepath must be a non-empty string"
-    
+
     if filepath.startswith('/') or '../' in filepath:
         logger.warning(f"Suspicious filepath attempt: {filepath}")
         return "Error: Invalid filepath - absolute paths not allowed"
-    
+
     path = BASE_DIR / filepath
 
     if not is_within_roots(path):
@@ -64,18 +71,20 @@ def read_file(filepath: str) -> str:
         return "Error reading file: " + str(e)
 
 
-@mcp.tool()
+# Register as MCP tool without overwriting the callable function name
+mcp.tool()(read_file)
+
+
 def write_file(filepath: str, content: str) -> str:
     """Write content to a file in the workspace directory."""
-    # Input validation
     if not filepath or not isinstance(filepath, str):
         logger.warning("Invalid filepath parameter: %s", filepath)
         return "Error: filepath must be a non-empty string"
-    
+
     if filepath.startswith('/') or '../' in filepath:
         logger.warning("Suspicious filepath attempt: %s", filepath)
         return "Error: Invalid filepath - absolute paths not allowed"
-    
+
     path = BASE_DIR / filepath
 
     if not is_within_roots(path):
@@ -92,18 +101,19 @@ def write_file(filepath: str, content: str) -> str:
         return "Error writing file: " + str(e)
 
 
-@mcp.tool()
+mcp.tool()(write_file)
+
+
 def list_files(directory: str = ".") -> str:
     """List files in a directory within the workspace."""
-    # Input validation
     if not isinstance(directory, str):
         logger.warning(f"Invalid directory parameter: {directory}")
         return "Error: directory must be a string"
-    
+
     if directory.startswith('/') or '../' in directory:
         logger.warning(f"Suspicious directory attempt: {directory}")
         return "Error: Invalid directory - absolute paths not allowed"
-    
+
     path = BASE_DIR / directory
 
     if not is_within_roots(path):
@@ -125,7 +135,7 @@ def list_files(directory: str = ".") -> str:
             file_type = "DIR" if item.is_dir() else "FILE"
             size = item.stat().st_size if item.is_file() else 0
             files.append(f"{file_type}: {relative_path} ({size} bytes)")
-        
+
         result = "\n".join(files) if files else "Directory is empty"
         logger.info(f"Listed directory: {directory} ({len(files)} items)")
         return result
@@ -134,7 +144,9 @@ def list_files(directory: str = ".") -> str:
         return f"Error listing directory: {str(e)}"
 
 
-@mcp.tool()
+mcp.tool()(list_files)
+
+
 def analyze_code(code: str, focus: str = "quality") -> str:
     """Analyze code focusing on specified aspect.
 
@@ -165,6 +177,9 @@ The client would:
 
 Note: Full bidirectional sampling requires low-level MCP SDK.
 This simplified version demonstrates the concept."""
+
+
+mcp.tool()(analyze_code)
 
 
 @mcp.resource("file://workspace/{filename}")
@@ -211,10 +226,10 @@ Provide specific line numbers and remediation suggestions."""
 
 if __name__ == "__main__":
     import os
-    
+
     host = os.getenv('MCP_HOST', '127.0.0.1')
     port = int(os.getenv('MCP_PORT', 8000))
-    
+
     logger.info(f"Starting HTTP MCP Server on http://{host}:{port}")
     logger.info(f"Workspace roots: {BASE_DIR}")
     print(f"Starting HTTP MCP Server on http://{host}:{port}")

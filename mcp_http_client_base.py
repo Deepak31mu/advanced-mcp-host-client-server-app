@@ -18,7 +18,7 @@ class MCPHTTPClient:
     MAX_RETRIES = 3
     RETRY_DELAY = 1  # seconds
 
-    def __init__(self, server_url: str, roots_dir: str):
+    def __init__(self, server_url: str, roots_dir: str = None):
         self.server_url = server_url
         self.roots_dir = roots_dir
         self.session = None
